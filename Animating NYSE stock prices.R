@@ -21,6 +21,7 @@ agricompanies <- nyse[nyse$industry %in% agri_chem,]$symbol %>%
 
 setDT(nyse)
 setDT(agricompanies)
+options(datatable.print.class = TRUE)
 
 # Get the percentage return by symbol
 agricompanies[, pct_return := adjusted/lag(adjusted) - 1, by = symbol][]
@@ -29,9 +30,11 @@ agricompanies[, pct_return := adjusted/lag(adjusted) - 1, by = symbol][]
 agricompanies_merged <- merge(agricompanies,nyse[,.SD, .SDcols = c("symbol","company","sector","industry")],by = "symbol")
 
 # Convert character fields to factor fields and reorder
-agricompanies_merged[,lapply(.SD, as.factor), .SDcols = c("symbol","company","sector","industry")]
+character_cols <- names(agricompanies_merged)[lapply(agricompanies_merged,is.character) == TRUE]
 
-agricompanies_merged[, `:=`(symbol = forcats::fct_reorder2(symbol,date,pct_return), company = forcats::fct_reorder2(company,date,pct_return))]
+agricompanies_merged[,c(character_cols):= lapply(.SD, as.factor), .SDcols = character_cols][]
+
+agricompanies_merged[, `:=`(symbol = forcats::fct_reorder2(symbol,date,pct_return), company = forcats::fct_reorder2(company,date,pct_return))][]
 
 # Add a six month rolling mean
 agricompanies_merged[, rollmean := zoo::rollmean(pct_return,
