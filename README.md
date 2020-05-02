@@ -1,7 +1,7 @@
 # Creating beautiful data visualizations with R
 Using `R` and related visualization packages to create animated visualizations can be an extremely powerful method to deliver insights to stakeholders. Let's have a look how to do that.
 
-The most recent Business Intelligence tool tha I've created - A Dashboard created with __R Shiny__ and __Flexdashboard__
+The most recent Business Intelligence tool that I've created - A Dashboard created with __R Shiny__ and __Flexdashboard__
 
 can be found in the __Dashboard__ folder.
 
