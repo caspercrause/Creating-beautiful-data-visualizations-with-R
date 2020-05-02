@@ -1,0 +1,12 @@
+name: Dashboard_South_African_Fresh_Produce_Exports
+title: Dashboard_South_African_Fresh_Produce_Exports
+username:
+account: casper-crause
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 2223219
+bundleId: 3093058
+url: https://casper-crause.shinyapps.io/Dashboard_South_African_Fresh_Produce_Exports/
+when: 1588404980.40653
+asMultiple: FALSE
+asStatic: FALSE
