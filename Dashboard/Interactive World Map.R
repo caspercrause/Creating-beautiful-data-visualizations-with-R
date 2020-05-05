@@ -3,16 +3,16 @@ library(rnaturalearth)
 library(rnaturalearthdata)
 library(rgeos)
 library(data.table)
+library(plotly)
 
 
-
-data_all_comm_combined <- readr::read_rds("../Dashboard/data_all_combined.rds")
+data_all_comm_combined <- readr::read_rds("Dashboard/data_all_combined.rds")
 ne_countries(scale="medium",returnclass = "sf") -> world
 
 data_all_comm_combined[, .(total = sum(Act_Ctns)), by = .(CountryDesc)] -> summed
 
 
-summed[CountryDesc %like% "Korea",CountryDesc:="Korea"]
+summed[CountryDesc %like% "Russ",CountryDesc:= "Russia"]
 
 
 setdiff(summed$CountryDesc, world$name)

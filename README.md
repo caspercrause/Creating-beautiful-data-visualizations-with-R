@@ -6,7 +6,7 @@ The most recent Business Intelligence tool that I've created - A Dashboard creat
 can be found in the __Dashboard__ folder.
 
 The App can be accessed using this link:
-https://casper-crause.shinyapps.io/Dashboard_South_African_Fresh_Produce_Exports/
+https://casper-crause.shinyapps.io/Dashboard/
 
 1. Animations can be found in the ___GIF___ folder
 2. The scripts that created these ___GIF's___ are the respective ___.R___ files

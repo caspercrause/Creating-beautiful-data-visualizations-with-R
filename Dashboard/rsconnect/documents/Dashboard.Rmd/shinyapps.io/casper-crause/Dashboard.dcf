@@ -1,0 +1,12 @@
+name: Dashboard
+title: Dashboard
+username:
+account: casper-crause
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 2246074
+bundleId: 3107020
+url: https://casper-crause.shinyapps.io/Dashboard/
+when: 1588698616.83746
+asMultiple: FALSE
+asStatic: FALSE

@@ -4,9 +4,12 @@ output:
   flexdashboard::flex_dashboard:
     orientation: rows
     vertical_layout: fill
+    css: styles-default.css
+    logo: apple.png
     theme: spacelab
     social: ["facebook","twitter","linkedin", "menu" ]
 runtime: shiny
+
 ---
 
 ```{r setup, include=FALSE}
@@ -330,4 +333,3 @@ geom_point(size = 0.001, aes(text = txt)) -> p
   plotly::ggplotly(p,tooltip = "txt")
   })
 ```
-
