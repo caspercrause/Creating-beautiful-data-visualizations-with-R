@@ -42,11 +42,20 @@ data_all_comm_combined <- data_all_comm_combined[, .SD, .SDcols = patterns("Seas
 ```
 
 
-# Sidebar { .sidebar data-width=314}
+# Sidebar { .sidebar data-width=325}
 -----------------------------------------------------------------------
 ```{r widgets + reset + apply buttons}
 # Allow use of shnyjs in Rmarkdown: 
 shinyjs::useShinyjs(rmd = TRUE)
+
+br()
+
+
+
+observe({
+      showNotification("Welcome! Click on Apply to get started")
+    })
+
 
 
 shiny::selectInput(
@@ -91,31 +100,32 @@ size                   = 10,
 
  ))
 
+
+# Let countries-dropdown depend on region-dropdown
 countries <- as.character(unique(data_all_comm_combined$CountryDesc))
 
-shinyWidgets::pickerInput(
+
+##
+# as.character(unique(data_all_comm_combined[RegionReportAsDesc==input$region,]$Country))
+##
+shiny::renderUI({
+  
+ shinyWidgets::pickerInput(
 inputId   = "country",
 label     = h4("Countries"),
-choices   = countries,
-selected  = countries,
+choices   = as.character(unique(data_all_comm_combined[RegionReportAsDesc%in%input$region,]$CountryDesc)),
+selected  = as.character(unique(data_all_comm_combined[RegionReportAsDesc%in%input$region,]$CountryDesc)),
 multiple  = TRUE,
 options   = list(
 `actions-box`          = TRUE,
-size                   = 10,
+size                   = 9,
 `selected-text-format` = "count",
 `live-search`          = TRUE,
 `dropup-auto`          = FALSE
 
- ))
-
-# shiny::sliderInput(
-# inputId = "cartons",
-# label = h4("Carton Quantity"),
-# min = 0,
-# max = max(data_all_comm_combined$Act_Ctns),
-# value = c(100000,200000),
-# step = 10000,
-# sep = ",")
+ )) 
+  
+})
 
 
 # Provide some space beteen sidebar inputs and the apply & reset buttons
@@ -265,13 +275,13 @@ Row {data-height=1000}
 
 ```{r quantity by week}
 
-## 1. renderPlotly()
-output$plotly1 <-  plotly::renderPlotly(expr = {(
-p <- processed_data_filtered_comm_tbl()[,.(quantity_by_week = sum(Act_Ctns)), by = .(Season,ShipWeeks)
+data_by_week <- shiny::reactive({
+  processed_data_filtered_comm_tbl()[,.(quantity_by_week = sum(Act_Ctns)), by = .(Season,ShipWeeks)
        ][, head(.SD,25), by = Season
          ][, season.week := paste(Season,ShipWeeks,sep = " - ")
            ][, season.week:= str_remove_all(season.week,"(\\d\\d\\d\\d - )") %>% forcats::fct_reorder(ShipWeeks,.desc = TRUE)
-             ][,lbl_txt:= paste("Shipping Week: ",ShipWeeks,"\n","Cartons: ",scales::comma(quantity_by_week))] %>% ggplot(aes(season.week,quantity_by_week))+
+             ][,lbl_txt:= paste("Shipping Week: ",ShipWeeks,"\n","Cartons: ",scales::comma(quantity_by_week))] %>% 
+    ggplot(aes(season.week,quantity_by_week))+
 geom_col(color = "white", fill = "steelblue", aes(text = lbl_txt))+
 theme_minimal()+
 facet_wrap(~ Season)+
@@ -280,9 +290,19 @@ coord_flip() +
 labs(y = "",x = "Week")+
 theme(axis.text.x = element_blank(),
 text = element_text(face = "bold"),strip.text =  element_text(face = "bold",size = 12))
+  
+})
 
-)
-plotly::ggplotly(p,tooltip = "lbl_txt")
+## 1. renderPlotly()
+output$plotly1 <-  plotly::renderPlotly(expr = {(
+  
+ req(input$apply)
+  
+
+
+
+) 
+plotly::ggplotly(data_by_week(),tooltip = "lbl_txt")
 
         
                                   })
@@ -318,6 +338,8 @@ switch(EXPR = input$aggregate,
 })
 
 plotly::renderPlotly({
+  
+req(input$apply)
   
   switch.statement() %>% 
     ggcharts::lollipop_chart(RegionReportAsDesc,total,

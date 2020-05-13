@@ -1,0 +1,357 @@
+---
+title: "Exports Dashboard"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill
+    css: styles-default.css
+    logo: apple.png
+    theme: spacelab
+    social: ["facebook","twitter","linkedin", "menu" ]
+runtime: shiny
+
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(shiny)
+library(shinyWidgets)
+library(shinyjs)
+library(shinythemes)
+
+
+# Core
+library(tidyverse)
+library(data.table)
+
+# Visualization
+library(tidyquant)
+library(plotly)
+library(ggcharts)
+
+
+
+```
+
+```{r data manipuation}
+data_all_comm_combined <-  readr::read_rds(path = "data_all_combined.rds")
+setDT(data_all_comm_combined)
+# Select only columns of interest
+data_all_comm_combined <- data_all_comm_combined[, .SD, .SDcols = patterns("Season|Report|Export|Vessel|Ctns|Country|Plt|Weeks")]
+
+```
+
+
+# Sidebar { .sidebar data-width=325}
+-----------------------------------------------------------------------
+```{r widgets + reset + apply buttons}
+# Allow use of shnyjs in Rmarkdown: 
+shinyjs::useShinyjs(rmd = TRUE)
+
+br()
+
+
+
+observe({
+      showNotification("Welcome! Click on Apply to get started")
+    })
+
+
+
+shiny::selectInput(
+inputId   = "season",
+label     = h4("Year/Season"),
+choices   = unique(data_all_comm_combined$Season),
+selected  = unique(data_all_comm_combined$Season),
+multiple  = TRUE,
+selectize = TRUE )
+
+
+fruit <-  as.character(unique(data_all_comm_combined$ReportCommDesc))
+
+shinyWidgets::pickerInput(
+inputId   = "fruit",
+label     = h4("Fruit Type"),
+choices   = fruit,
+selected  = fruit,
+multiple  = TRUE,
+options   = list(
+`actions-box`          = TRUE,
+size                   = 10,
+`selected-text-format` = "count",
+`live-search`          = TRUE
+
+ ))
+
+regions <- as.character(unique(data_all_comm_combined$RegionReportAsDesc))
+
+shinyWidgets::pickerInput(
+inputId   = "region",
+label     = h4("Region"),
+choices   = regions,
+selected  = regions,
+multiple  = TRUE,
+options   = list(
+`actions-box`          = TRUE,
+size                   = 10,
+`selected-text-format` = "count",
+`live-search`          = TRUE,
+`dropup-auto`          = FALSE
+
+ ))
+
+
+# Let countries-dropdown depend on region-dropdown
+countries <- as.character(unique(data_all_comm_combined$CountryDesc))
+
+
+##
+# as.character(unique(data_all_comm_combined[RegionReportAsDesc==input$region,]$Country))
+##
+shiny::renderUI({
+  
+ shinyWidgets::pickerInput(
+inputId   = "country",
+label     = h4("Countries"),
+choices   = as.character(unique(data_all_comm_combined[RegionReportAsDesc%in%input$region,]$CountryDesc)),
+selected  = as.character(unique(data_all_comm_combined[RegionReportAsDesc%in%input$region,]$CountryDesc)),
+multiple  = TRUE,
+options   = list(
+`actions-box`          = TRUE,
+size                   = 9,
+`selected-text-format` = "count",
+`live-search`          = TRUE,
+`dropup-auto`          = FALSE
+
+ )) 
+  
+})
+
+
+# Provide some space beteen sidebar inputs and the apply & reset buttons
+
+br()
+hr()
+br()
+shiny::actionButton(inputId = "apply",label = "Apply",icon = shiny::icon("play"))
+
+
+# Reset button
+actionButton(inputId = "reset", label = "Restore Defaults", icon = shiny::icon("sync"))
+
+# Reset these:
+observeEvent(eventExpr = input$reset, handlerExpr = {
+shiny::updateSelectInput(
+session  = session,
+inputId  = "season",
+selected = as.character(unique(data_all_comm_combined$Season)))
+    
+shinyWidgets::updatePickerInput(
+session  = session,
+inputId  = "fruit",
+selected = fruit)
+
+shinyWidgets::updatePickerInput(
+session  = session,
+inputId  = "region",
+selected = regions)
+
+shinyWidgets::updatePickerInput(
+session  = session,
+inputId  = "country",
+selected = countries)
+
+
+# We'll need to mimic a click when resetting our app to defaults
+ shinyjs::delay(ms = 300,expr = {shinyjs::click(
+id = "apply" # The input id that you want to enforce when resetting to defaults
+              )
+
+})   
+})
+
+
+```
+
+
+```{r data manipulation}
+processed_data_filtered_comm_tbl <-  shiny::eventReactive(
+eventExpr = input$apply,
+valueExpr = {data_all_comm_combined[Season %in% input$season & 
+             ReportCommDesc %in% input$fruit  &
+             RegionReportAsDesc %in% input$region  &
+             CountryDesc %in% input$country]},
+  # When firing up the app, no data will appear by default. Set ignoreNULL to FALSE to have some data 
+ignoreNULL = FALSE )
+
+# The Slider should not depend on the apply button: Create a different reactive function for the slider input
+# processed_filtered_slidered_tbl <- shiny::reactive( processed_data_filtered_comm_tbl()[between(Act_Ctns,input$cartons[1], input$cartons[2])])
+
+# renderPrint(expr = processed_filtered_slidered_tbl() )
+```
+
+Row {data-height=200}
+-----------------------------------------------------------------------
+
+```{r summary values for value boxes}
+# summary_values_reactive_tbl <- shiny::reactive(x = {
+#     processed_data_filtered_comm_tbl()[,.(vessels = uniqueN(VesselName), 
+#                           cartons    = sum(Act_Ctns),
+#                           pallets    = sum(Plt_Qty),
+#                           cartons.eq = sum(Eqv_Ctns))
+#                        ][,c("cartons.txt","cartonseq.txt"):= lapply(.SD,scales::comma, scale = 1e-6,suffix = "Mn"), .SDcols = patterns("cartons")
+#                          ][, pallets.txt := scales::comma(pallets)]
+#     
+# })
+
+summary_values_reactive_tbl <- shiny::reactive(x = {
+processed_data_filtered_comm_tbl()[,.(vessels = uniqueN(VesselName),
+                          cartons    = sum(Act_Ctns),
+                          pallets    = sum(Plt_Qty),
+                          cartons.eq = sum(Eqv_Ctns))
+                       ][,c("cartons.txt","pallets.txt","cartonseq.txt"):= lapply(.SD,scales::comma, scale = 1e-6,suffix = "Mn"), .SDcols = patterns("car|pal")]
+    
+})
+
+
+```
+
+### Vessels
+```{r unique number of vessels}
+
+flexdashboard::renderValueBox(expr = {flexdashboard::valueBox(value = summary_values_reactive_tbl()$vessels,
+                        caption = "Vessels",
+                        icon = "fa-ship",
+                        color = palette_light()[[6]])})
+
+
+
+```
+
+### Total Cartons
+```{r Total actual cartons}
+
+
+flexdashboard::renderValueBox(expr = {flexdashboard::valueBox(
+value   = ifelse(summary_values_reactive_tbl()$cartons/ 1e6 < 1,
+yes     =  scales::comma(summary_values_reactive_tbl()$cartons),
+no      = summary_values_reactive_tbl()$cartons.txt),
+caption = "Total  Actual Cartons",
+icon    = "fa-box-open",
+color   = case_when(
+summary_values_reactive_tbl()$cartons > 35e6 ~ palette_light()[[3]],
+summary_values_reactive_tbl()$cartons > 25e6 ~ palette_light()[[9]],
+TRUE ~ palette_light()[[2]]
+
+)
+                        
+                        )
+})
+
+```
+
+
+### Total Pallets
+```{r}
+flexdashboard::renderValueBox(expr = {flexdashboard::valueBox(value = ifelse(summary_values_reactive_tbl()$pallets/1e6 < 1,
+yes = scales::comma(summary_values_reactive_tbl()$pallets),
+no = summary_values_reactive_tbl()$pallets.txt),
+caption = "Total Pallets Exported",
+icon = "fa-pallet",
+color = case_when(
+summary_values_reactive_tbl()$pallets > 350e3 ~ palette_light()[[3]],
+summary_values_reactive_tbl()$pallets > 200e3 ~ palette_light()[[9]],
+TRUE ~ palette_light()[[2]]
+                        )
+                        )
+})
+
+```
+
+Row {data-height=1000} 
+-----------------------------------------------------------------------
+
+### __Quantities by Week and Season__
+
+```{r quantity by week}
+
+data_by_week <- shiny::reactive({
+  processed_data_filtered_comm_tbl()[,.(quantity_by_week = sum(Act_Ctns)), by = .(Season,ShipWeeks)
+       ][, head(.SD,25), by = Season
+         ][, season.week := paste(Season,ShipWeeks,sep = " - ")
+           ][, season.week:= str_remove_all(season.week,"(\\d\\d\\d\\d - )") %>% forcats::fct_reorder(ShipWeeks,.desc = TRUE)
+             ][,lbl_txt:= paste("Shipping Week: ",ShipWeeks,"\n","Cartons: ",scales::comma(quantity_by_week))] %>% 
+    ggplot(aes(season.week,quantity_by_week))+
+geom_col(color = "white", fill = "steelblue", aes(text = lbl_txt))+
+theme_minimal()+
+facet_wrap(~ Season)+
+coord_flip() +
+# scale_y_continuous(labels = scales::comma)+
+labs(y = "",x = "Week")+
+theme(axis.text.x = element_blank(),
+text = element_text(face = "bold"),strip.text =  element_text(face = "bold",size = 12))
+  
+})
+
+## 1. renderPlotly()
+output$plotly1 <-  plotly::renderPlotly(expr = {(
+  
+ req(input$apply)
+  
+
+
+
+) 
+plotly::ggplotly(data_by_week(),tooltip = "lbl_txt")
+
+        
+                                  })
+
+ ## 2. plotlyOutput()
+plotly::plotlyOutput(outputId = "plotly1")
+```
+
+### __Exports by Region and Country__ 
+
+```{r Toggle between region and country}
+shinyWidgets::radioGroupButtons(
+  inputId   = "aggregate",
+  # label     = "Aggregated By",
+  choices   =  c("By Region", "By Country (Top 20)"),
+  selected  = "By Region",
+  status    = "primary",
+  justified = TRUE, # Spread out the widget over the entire width
+  checkIcon = list(yes = shiny::icon("ok",lib = "glyphicon"), no = NULL ),size = 'xs'
+  )
+```
+
+
+```{r create switch statement to switch between region and country}
+switch.statement <- shiny::reactive(x = {
+  
+switch(EXPR = input$aggregate,
+         "By Region" = processed_data_filtered_comm_tbl()[,.(total = sum(Act_Ctns)), by = RegionReportAsDesc][, txt := paste("Region: ", RegionReportAsDesc,"\n","Total Cartons: ",scales::comma(total))][total > 0 ],
+
+"By Country (Top 20)" = processed_data_filtered_comm_tbl()[, .(total = sum(Act_Ctns)), CountryDesc][order(-total), .SD[1:20]][,RegionReportAsDesc:=CountryDesc][!is.na(RegionReportAsDesc) & total > 0][, txt := paste("Country: ", RegionReportAsDesc,"\n","Total Cartons: ",scales::comma(total))]
+         )
+  
+})
+
+plotly::renderPlotly({
+  
+req(input$apply)
+  
+  switch.statement() %>% 
+    ggcharts::lollipop_chart(RegionReportAsDesc,total,
+                             #highlight = input$country
+                             )+
+labs(y = "", x = "")+
+scale_y_continuous(labels = ifelse(test = summary_values_reactive_tbl()$cartons/1e6>1,
+                                   yes = scales::comma_format(scale = 1e-6,suffix = " Mn"),
+                                   no = scales::comma_format()))+  
+theme(text = element_text(face = "bold",size = 14.5))+
+geom_point(size = 0.001, aes(text = txt)) -> p
+    
+  plotly::ggplotly(p,tooltip = "txt")
+  })
+```
