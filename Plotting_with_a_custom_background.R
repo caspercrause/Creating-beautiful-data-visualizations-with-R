@@ -11,7 +11,7 @@ these       <-  tables[[1]]
 
 table_names <- stringr::str_split(these,pattern = "(/)|(\\.)",simplify = T)[,2]
 
-# read all files and created a named list
+# read all files and create a named list
 lapply(these, readr::read_rds) %>% 
     purrr::set_names(table_names) -> named.list
 
