@@ -32,7 +32,8 @@ stocks %>%
 # Load raw image ----
 
  m <- jpeg::readJPEG("images/bull_and_bear.jpg")
-# You'll need to comfortable with indexing arrays in order to manipulate and customize the image 
+
+# You'll need be to comfortable with indexing arrays in order to manipulate and customize the image 
  class(m)
 # Dimensions: 990  rows, 1300 columns, 3 matrices
  dim(m)
