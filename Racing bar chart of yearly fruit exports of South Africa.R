@@ -75,8 +75,7 @@ pome_19_18      <- pome_19_18 %>%
     view_follow(fixed_x = T)+
   labs(title    = 'Year :{closest_state}',
        subtitle =  'The top importers of South African apples and pears, 2017 - 2019\nMeasured in Cartons',
-       caption  = str_glue('Source:
-                           Argi Hub') )
+       caption  = 'Source:\nArgi Hub' )
 
   animate(p_y, fps = 20)
  
