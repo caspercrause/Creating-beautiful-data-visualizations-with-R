@@ -7,7 +7,7 @@ library(gganimate)
 # Load data----
 mtcars %>% as_tibble() -> mtcars
 
-plot_static <- mtcars %>% 
+ plot_static <- mtcars %>% 
 mutate_at(vars(vs:am), ~ as_factor(.)) %>% 
   mutate(cyl = cyl %>% as_factor()) %>% 
 group_by(cyl,vs,am) %>% 
@@ -31,18 +31,17 @@ group_by(cyl,vs,am) %>%
   )+
   scale_fill_viridis_d(option = 'C', direction = 1)+
   labs(
-    title = str_glue('Comparing the median miles per US Gallon 
-                     between 4, 6 and 8-cylinder vehicles'),
-    fill = '',
-    x = 'Cylinders',
-    y = 'Median miles per US Gallon'
+    title = 'Comparing the median miles per US Gallon\nbetween 4, 6 and 8-cylinder vehicles',
+    fill  = '',
+    x     = 'Cylinders',
+    y     = 'Median miles per US Gallon'
   )
 
 # gganimate
 plot_static+
-  gganimate::transition_states(cyl, wrap = F)+
+  gganimate::transition_states(cyl, wrap = FALSE)+
   shadow_mark()
 
 
-# gganimate::anim_save('MPG.gif', path = '7 days of animation/GIF/')
+# gganimate::anim_save('MPG.gif', path = 'GIF/')
   
