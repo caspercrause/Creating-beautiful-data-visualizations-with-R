@@ -97,11 +97,9 @@ plot <- ggplot(fitted_model_linear) +
   labs(      x = "Time(Years)",
              y = "Age", 
              title = "Using a linear model to predict life expectancy ", 
-             subtitle = str_glue("Formula: 
-                         lifeExp ~ year + gdpPercap"), 
+             subtitle = "Formula:\nlifeExp ~ year + gdpPercap", 
              color = '',
-             caption = 'The year and the GDP per capita explain 43.7 % of the 
-variability in life-expectancy'
+             caption = 'The year and the GDP per capita explain 43.7 % of the\nvariability in life-expectancy'
   ) +
   theme_bw()+
   expand_limits(y = 0)+
@@ -116,4 +114,4 @@ variability in life-expectancy'
 
 # save animation----
 # anim_save(filename = 'gapminder_predict_linear.gif',
-          # path     = '7 days of animation/')
+# path     = 'GIF/')
