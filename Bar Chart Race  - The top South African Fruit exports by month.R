@@ -8,6 +8,7 @@ library(furrr)
 # Get the info of the directory----
 dir_info <- fs::dir_info('All Varieties/')
 
+plan(multisession)
 # Read in all excel sheets using furrr:----
 
 data_all_comm_combined <- dir_info %>% 
@@ -65,14 +66,13 @@ scale_fill_brewer(palette = 'Paired', direction = -1)+
 p <- plot_stat + gganimate::transition_states(Month, transition_length = 4, state_length = 1)+
   labs(
     title    = 'Month:{closest_state}',
-    subtitle = str_glue( 'The top perishable exports by pallet-quantity
-                         from South Africa by month in 2018'),
+    subtitle =  'The top perishable exports by pallet-quantity\nfrom South Africa by month in 2018',
     caption  = 'Source : Agri Hub'
   )
 
 
 gganimate::animate(p,fps = 6)
 
-# gganimate::anim_save('exports_by_comm.gif',path = '7 days of animation/')
+# gganimate::anim_save('exports_by_comm.gif',path = 'GIF/')
 
   
