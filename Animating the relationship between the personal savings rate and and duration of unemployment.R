@@ -25,9 +25,7 @@ economics %>% plot_cor()
 colortools::complementary('steelblue')
 
 
-plot_static <- 
-  # data wrangling----
-  economics %>% 
+plot_static <- economics %>% 
   mutate(month = date %>% lubridate::month(label = T),
          year  = date %>% lubridate::year()) %>% 
   unite(
@@ -41,8 +39,6 @@ plot_static <-
   pivot_longer(cols             = median_period_unemp:personal_savings,
                names_to         = 'measure',
                values_to        = 'value') %>% 
-  
-  # plotting----
   ggplot(aes(date, value))+
   geom_area(aes(fill = measure,
                color = measure),
@@ -55,15 +51,10 @@ plot_static <-
     title = str_glue('What is the relationship between the personal savings 
     rate and the median duration of unemployment?'),
     y     = '',
-    x     = ''
-     )+
+    x     = '')+
   theme_tq()+
   scale_x_date(date_labels = '%b-%Y')
-  # geom_smooth(method ='loess', 
-  #             size   = 1,
-  #             color  = 'black')+
-  # facet_wrap(~ measure, ncol = 1)
-
+ 
   # gganimate----
 plot_anim <- plot_static + gganimate::transition_reveal(date)+
   ease_aes('linear')+
