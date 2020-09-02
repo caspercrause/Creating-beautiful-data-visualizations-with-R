@@ -5,7 +5,7 @@ library(gganimate)
 library(ggrepel)
 library(tidyquant)
 
-gapminder <- gapminder
+data(gapminder)
 
 
 # Custom Function----
@@ -15,19 +15,19 @@ show_outliers <- function(data){
     stop('data must be of numeric type')
   }
   
-  data_tibble <- tibble(data = data)
+  data_tibble <- tibble::tibble(data = data)
   
   data_tibble_summary <- data_tibble %>% 
-    summarise(
-      lower_quantile = data %>%  quantile(0.25, na.rm = T),
-      upper_quantile = data %>%  quantile(0.75, na.rm = T),
-      inter_quantile_range = data %>% IQR(na.rm = T),
+    dplyr::summarise(
+      lower_quantile = data %>%  stats::quantile(0.25, na.rm = T),
+      upper_quantile = data %>%  stats::quantile(0.75, na.rm = T),
+      inter_quantile_range = data %>% stats::IQR(na.rm = T),
       lower_limit = lower_quantile - 1.5*inter_quantile_range,
       upper_limit = upper_quantile + 1.5*inter_quantile_range
     )
   
   output <-  data_tibble %>% 
-    mutate(outliers = case_when(
+    dplyr::mutate(outliers = dplyr::case_when(
       data > data_tibble_summary$upper_limit ~ TRUE,
       data < data_tibble_summary$lower_limit ~ TRUE,
       TRUE                                   ~ FALSE
@@ -36,16 +36,15 @@ show_outliers <- function(data){
   return(output$outliers)
 }
 # Test function:----
-data %>% show_outliers()
+show_outliers(data)
 # Plotting----
-plot_static <-gapminder %>%
-  mutate(continent  = continent %>% fct_reorder(lifeExp)) %>%
-  group_by(continent,year) %>% 
-  mutate(outliers = lifeExp %>% show_outliers()) %>% 
-  ungroup() %>% 
+plot_static <- gapminder %>%
+  dplyr::mutate(continent  =  forcats::fct_reorder(continent,lifeExp)) %>%
+  dplyr::group_by(continent,year) %>% 
+  dplyr::mutate(outliers = show_outliers(lifeExp)) %>% 
+  dplyr::ungroup() %>% 
 
-  ggplot() +
- aes(x = continent, y = lifeExp, fill = continent) +
+ ggplot(aes(x = continent, y = lifeExp, fill = continent)) +
  geom_boxplot() +
  labs(
        fill = "Continent",
@@ -68,6 +67,6 @@ plot_static + gganimate::transition_time(year)+
     subtitle = "Exploring the change in life-expectancy over time"
   )
 
-
-# anim_save('boxplot_w_labs.gif',path = '7 days of animation/')
+# Save The file to designated folder of your choice
+gganimate::anim_save('boxplot_w_labs.gif',path = "GIF/")
 
